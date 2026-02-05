@@ -77,9 +77,17 @@ class _HomePageState extends State<HomePage> {
     Navigator.push(
       context,
       MaterialPageRoute<void>(
-        builder: (context) => StatPage(listOfNums: _listOfNumbers),
+        builder: (context) =>
+            StatPage(listOfNums: _listOfNumbers, reset: _reset),
       ),
     );
+  }
+
+  // reset to initial state
+  void _reset() {
+    setState(() {
+      _randomNum = 0;
+    });
   }
 
   @override
@@ -100,7 +108,7 @@ class _HomePageState extends State<HomePage> {
           Expanded(
             child: Center(
               child: _randomNum == 0
-                  ? Text("Intial state")
+                  ? Text("")
                   : Text(
                       '$_randomNum',
                       style: TextStyle(color: textColor, fontSize: 80),
@@ -131,21 +139,22 @@ class _HomePageState extends State<HomePage> {
 
 //page that displays a collection of numbers and their count, buttons: reset and back to Home Page
 class StatPage extends StatefulWidget {
-
   final Map<int, int> listOfNums;
-  const StatPage({super.key, required this.listOfNums});
+  final VoidCallback reset;
+
+  const StatPage({super.key, required this.listOfNums, required this.reset});
 
   @override
   State<StatPage> createState() => _StatPageState();
 }
 
 class _StatPageState extends State<StatPage> {
-  
   void _reset() {
     setState(() {
       for (var key in widget.listOfNums.keys) {
         widget.listOfNums[key] = 0;
       }
+      widget.reset();
     });
   }
 
