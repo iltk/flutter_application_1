@@ -1,5 +1,5 @@
 import 'dart:math';
-
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 //application colors
@@ -46,10 +46,11 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage>
-    with SingleTickerProviderStateMixin {
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   int _randomNum = 0;
   late AnimationController _controller;
+  late Timer _timer;
+  int _counter = 0;
 
   @override
   void initState() {
@@ -61,10 +62,10 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-
   @override
   void dispose() {
-    _controller.dispose(); // Clean up
+    _controller.dispose();
+    _timer.cancel();
     super.dispose();
   }
 
@@ -83,11 +84,25 @@ class _HomePageState extends State<HomePage>
 
   //generate random number & increment number counts
   void _generateNumber() {
-    setState(() {
-      _randomNum = Random().nextInt(9) + 1;
 
-      //increments the number count in the map
-      _listOfNumbers[_randomNum] = _listOfNumbers[_randomNum]! + 1;
+    
+    if (_controller.isAnimating) {
+      return;
+    }
+    _controller.repeat();
+
+    Timer.periodic(Duration(milliseconds: 50), (timer) {
+      if (_counter >= 14) {
+        timer.cancel();
+        _listOfNumbers[_randomNum] = _listOfNumbers[_randomNum]! + 1;
+        _controller.reset();
+        _counter = 0;
+      } else {
+        setState(() {
+          _randomNum = Random().nextInt(9) + 1;
+          _counter++;
+        });
+      }
     });
   }
 
@@ -96,8 +111,7 @@ class _HomePageState extends State<HomePage>
     Navigator.push(
       context,
       MaterialPageRoute<void>(
-        builder: (context) =>
-            StatPage(listOfNums: _listOfNumbers, reset: _reset),
+        builder: (context) => StatPage(listOfNums: _listOfNumbers, reset: _reset),
       ),
     );
   }
@@ -123,15 +137,10 @@ class _HomePageState extends State<HomePage>
       ),
       body: Column(
         children: [
-          //Displays a randomly generated number or space as a intial state. takes all avaible space
+          //Displays an animated randomly generated number or space as a intial state. takes all avaible space
           Expanded(
             child: RotationTransition(
-              turns: Tween(begin: 0.0, end: 1.0).animate(_controller)
-                ..addStatusListener((status) {
-                  if (status == AnimationStatus.completed) {
-                    _controller.reset();
-                  }
-                }),
+              turns: Tween(begin: 0.0, end: 1.0).animate(_controller),
               child: Center(
                 child: _randomNum == 0
                     ? Text("")
@@ -143,11 +152,12 @@ class _HomePageState extends State<HomePage>
             ),
           ),
 
+          //when user clicks the generate button multiple times(before the animation is completed), 
+          //the count updates only once when the animation is completed
           ElevatedButton(
             style: _elevatedButtonStyle,
             onPressed: () {
               _generateNumber();
-              _controller.forward();
             },
             child: const Text('Generate'),
           ),
